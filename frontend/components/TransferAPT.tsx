@@ -59,7 +59,6 @@ export function TransferAPT() {
         }),
       );
 
-  
       const executedTransaction = await aptosClient().waitForTransaction({
         transactionHash: committedTransaction.hash,
       });
@@ -87,29 +86,73 @@ export function TransferAPT() {
           functionArguments: [],
           typeArguments: [],
         },
-      })
+      });
 
       const senderAuth = await signTransaction({
-        transactionOrPayload: transferTxn
-      })
+        transactionOrPayload: transferTxn,
+      });
 
       const additionalAuth = aptosClient().transaction.sign({
         signer: secondAccount,
-        transaction: transferTxn
-      })
+        transaction: transferTxn,
+      });
 
       const committedTransaction = await aptosClient().transaction.submit.multiAgent({
         transaction: transferTxn,
         senderAuthenticator: senderAuth.authenticator,
-        additionalSignersAuthenticators: [additionalAuth]
-      })
+        additionalSignersAuthenticators: [additionalAuth],
+      });
 
       const executedTransaction = await aptosClient().waitForTransaction({
         transactionHash: committedTransaction.hash,
       });
       toast({
         title: "Success",
-        description: `Transaction succeeded, hash: ${executedTransaction.hash}`,
+        description: `Multi agent Transaction succeeded, hash: ${executedTransaction.hash}`,
+      });
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  const feepayerButton = async () => {
+    if (!account || !secondAccount) {
+      return;
+    }
+
+    try {
+      const feepayerTxn = await aptosClient().transaction.build.simple({
+        sender: account.address,
+        data: {
+          function: "0xd0fdb75e3cea4308e9dff7f4975eeaadf073014dbafa319de674a87be6e56e73::message::test_message",
+          functionArguments: [],
+          typeArguments: [],
+        },
+        withFeePayer: true,
+      });
+
+      const senderAuth = await signTransaction({
+        transactionOrPayload: feepayerTxn,
+      });
+
+      const feepayerAuth = aptosClient().transaction.signAsFeePayer({
+        signer: secondAccount,
+        transaction: feepayerTxn,
+      });
+
+      const committedTransaction = await aptosClient().transaction.submit.simple({
+        transaction: feepayerTxn,
+        senderAuthenticator: senderAuth.authenticator,
+        feePayerAuthenticator: feepayerAuth,
+      });
+
+      const executedTransaction = await aptosClient().waitForTransaction({
+        transactionHash: committedTransaction.hash,
+      });
+      queryClient.invalidateQueries();
+      toast({
+        title: "Success",
+        description: `Feepayer Transaction succeeded, hash: ${executedTransaction.hash}`,
       });
     } catch (error) {
       console.error(error);
@@ -134,11 +177,11 @@ export function TransferAPT() {
       >
         Transfer
       </Button>
-      <Button
-        disabled={!account}
-        onClick={multiAgentButton}
-      >
+      <Button disabled={!account} onClick={multiAgentButton}>
         MultiAgent Transaction
+      </Button>
+      <Button disabled={!account} onClick={feepayerButton}>
+        FeePayer Transaction
       </Button>
     </div>
   );
