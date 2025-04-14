@@ -7,10 +7,11 @@ import { aptosClient } from "@/utils/aptosClient";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { getAccountAPTBalance } from "@/view-functions/getAccountBalance";
+import { feepayerAccount as secondAccount } from "@/utils/helpers";
 import { transferAPT } from "@/entry-functions/transferAPT";
 
 export function TransferAPT() {
-  const { account, signAndSubmitTransaction } = useWallet();
+  const { account, signTransaction, signAndSubmitTransaction } = useWallet();
   const queryClient = useQueryClient();
 
   const [aptBalance, setAptBalance] = useState<number>(0);
@@ -44,7 +45,7 @@ export function TransferAPT() {
     },
   });
 
-  const onClickButton = async () => {
+  const transferButton = async () => {
     if (!account || !recipient || !transferAmount) {
       return;
     }
@@ -57,10 +58,55 @@ export function TransferAPT() {
           amount: Math.pow(10, 8) * transferAmount,
         }),
       );
+
+  
       const executedTransaction = await aptosClient().waitForTransaction({
         transactionHash: committedTransaction.hash,
       });
       queryClient.invalidateQueries();
+      toast({
+        title: "Success",
+        description: `Transaction succeeded, hash: ${executedTransaction.hash}`,
+      });
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  const multiAgentButton = async () => {
+    if (!account) {
+      return;
+    }
+
+    try {
+      const transferTxn = await aptosClient().transaction.build.multiAgent({
+        sender: account.address,
+        secondarySignerAddresses: [secondAccount.accountAddress],
+        data: {
+          function: "0xd0fdb75e3cea4308e9dff7f4975eeaadf073014dbafa319de674a87be6e56e73::message::test_multi_message",
+          functionArguments: [],
+          typeArguments: [],
+        },
+      })
+
+      const senderAuth = await signTransaction({
+        transactionOrPayload: transferTxn
+      })
+
+      const additionalAuth = aptosClient().transaction.sign({
+        signer: secondAccount,
+        transaction: transferTxn
+      })
+
+      const committedTransaction = await aptosClient().transaction.submit.multiAgent({
+        transaction: transferTxn,
+        senderAuthenticator: senderAuth.authenticator,
+        additionalSignersAuthenticators: [additionalAuth]
+      })
+
+      const executedTransaction = await aptosClient().waitForTransaction({
+        transactionHash: committedTransaction.hash,
+      });
       toast({
         title: "Success",
         description: `Transaction succeeded, hash: ${executedTransaction.hash}`,
@@ -84,9 +130,15 @@ export function TransferAPT() {
       <Input disabled={!account} placeholder="1 APT" onChange={(e) => setTransferAmount(parseFloat(e.target.value))} />
       <Button
         disabled={!account || !recipient || !transferAmount || transferAmount > aptBalance || transferAmount <= 0}
-        onClick={onClickButton}
+        onClick={transferButton}
       >
         Transfer
+      </Button>
+      <Button
+        disabled={!account}
+        onClick={multiAgentButton}
+      >
+        MultiAgent Transaction
       </Button>
     </div>
   );
