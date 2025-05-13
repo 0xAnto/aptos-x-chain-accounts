@@ -82,7 +82,7 @@ export function TransferAPT() {
         sender: account.address,
         secondarySignerAddresses: [secondAccount.accountAddress],
         data: {
-          function: "0xd0fdb75e3cea4308e9dff7f4975eeaadf073014dbafa319de674a87be6e56e73::message::test_multi_message",
+          function: "0x06296764fd0fdbfa96b57215efc741784b1c8e53b2dfb76487c50a1ad036e914::price_oracle::multi_message",
           functionArguments: [],
           typeArguments: [],
         },
@@ -124,7 +124,7 @@ export function TransferAPT() {
       const feepayerTxn = await aptosClient().transaction.build.simple({
         sender: account.address,
         data: {
-          function: "0xd0fdb75e3cea4308e9dff7f4975eeaadf073014dbafa319de674a87be6e56e73::message::test_message",
+          function: "0x06296764fd0fdbfa96b57215efc741784b1c8e53b2dfb76487c50a1ad036e914::price_oracle::message",
           functionArguments: [],
           typeArguments: [],
         },

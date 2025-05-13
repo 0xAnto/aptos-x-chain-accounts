@@ -16,11 +16,16 @@
     "_fmt": "prettier 'frontend/**/*.ts'",
     "fmt": "npm run _fmt -- --write"
   },
+  "pnpm": {
+    "overrides": {
+      "@aptos-labs/ts-sdk": "2.0.0"
+    }
+  },
   "dependencies": {
-    "@aptos-labs/derived-wallet-ethereum": "^0.1.2",
-    "@aptos-labs/derived-wallet-solana": "^0.2.3",
-    "@aptos-labs/ts-sdk": "^1.30.0",
-    "@aptos-labs/wallet-adapter-react": "^4.1.0",
+    "@aptos-labs/derived-wallet-ethereum": "0.2.2",
+    "@aptos-labs/derived-wallet-solana": "0.2.5",
+    "@aptos-labs/ts-sdk": "2.0.0",
+    "@aptos-labs/wallet-adapter-react": "6.0.3",
     "@radix-ui/react-collapsible": "^1.1.0",
     "@radix-ui/react-dialog": "^1.1.1",
     "@radix-ui/react-dropdown-menu": "^2.1.1",
